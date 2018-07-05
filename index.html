@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<title>face</title>
+		<meta charset="utf-8">
+		<style>
+			#container {
+				position : relative;
+			}
+			#video {
+				visibility:hidden;
+			}
+			#canvas {
+				position : absolute;
+				left : 0;
+				top : 0;
+                transform: scale(-1, 1);
+                height:100%;
+                width:100%;
+                animation: huerotator 20s infinite alternate;
+			}
+            @keyframes huerotator {
+                0% {
+                    filter: hue-rotate(0deg);
+                }
+                100% {
+                    filter: hue-rotate(360deg);
+                }
+            }
+		</style>
+	</head>
+	<body>
+		<script src="./js/libs/utils.js"></script>
+		<script src="./js/clmtrackr.js"></script>
+		<div id="content">
+			<h2>Example</h2>
+            <video id="video" width="368" height="288" autoplay>
+				</video>
+				<canvas id="canvas" width="368" height="288"></canvas>
+			<script>
+				var video = document.getElementById('video');        
+                var localMediaStream = null;
+				var ctracker = new clm.tracker();
+				var canvasInput = document.getElementById('canvas');
+                var cc = canvasInput.getContext('2d');
+				var hasGetUserMedia = function() {
+					return (navigator.getUserMedia || navigator.webkitGetUserMedia ||
+						navigator.mozGetUserMedia || navigator.msGetUserMedia);
+				};
+
+				if(!hasGetUserMedia()) {
+					alert("no support");
+				} else {
+					window.URL = window.URL || window.webkitURL;
+					navigator.getUserMedia  = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
+					navigator.getUserMedia({video: true}, function(stream) {
+						video.srcObject = stream;
+                        localMediaStream = stream;
+                        var w = video.offsetWidth;
+                        var h = video.offsetHeight;    
+                        canvasInput.setAttribute("width", w);
+                        canvasInput.setAttribute("height", h);
+					}, function(e){alert(e);});
+				}
+
+                cc.fillStyle = "rgba(0, 0, 0, 1)";
+                cc.fillRect(0, 0, canvasInput.width, canvasInput.height);
+
+				ctracker.init();
+                ctracker.start(video);
+
+                drawLoop();
+
+                function drawLoop() {
+                    requestAnimFrame(drawLoop);
+                    drawArc(cc,canvasInput);
+                    if(ctracker.getCurrentPosition()){
+                        ctracker.draw(canvasInput);
+                    }
+                }
+
+                function drawArc(cc,canvasInput){
+                    const dx = canvasInput.width * 1 / 3 + canvasInput.width / 10 * Math.sin(Date.now() / 2000);
+                    const dy = canvasInput.height * 1 / 3;
+                    const size = canvasInput.width ;
+                    var grad  = cc.createRadialGradient(dx,dy,0,dx,dy,size);
+                    grad.addColorStop(0,"rgba(0, 0, 128, 1)");
+                    grad.addColorStop(1,"rgba(0, 0, 0, 1)");
+                    cc.fillStyle = grad;
+                    cc.beginPath();
+                    cc.arc(dx, dy, size, 0,Math.PI*2, true);
+                    cc.fill();
+                }
+			</script>
+		</div>
+	</body>
+</html>
